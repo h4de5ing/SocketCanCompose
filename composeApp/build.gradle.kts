@@ -10,7 +10,7 @@ plugins {
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.composeHotReload)
 }
-val kmpVersionName = "3.0.0"
+val kmpVersionName = "3.0.1"
 kotlin {
     androidTarget {
         compilerOptions {
