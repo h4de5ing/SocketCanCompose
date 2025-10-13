@@ -8,6 +8,7 @@ import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -35,6 +36,7 @@ import com.russhwolf.settings.set
 import kotlinx.coroutines.*
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import kotlin.experimental.and
+import kotlin.random.Random
 import kotlin.text.toString
 
 @Composable
@@ -43,6 +45,12 @@ fun App() {
     MaterialTheme { AppSocketUI() }
 }
 
+var value0: String by mutableStateOf("")
+var value1: String by mutableStateOf("")
+var value2: String by mutableStateOf("")
+var value3: String by mutableStateOf("")
+var value4: String by mutableStateOf("")
+var value5: String by mutableStateOf("")
 
 data class CanFrame(val id: Long, val eff: Long, val rtr: Long, val len: Int, val data: List<Long>) {
     fun toPrettyString(isOrigin: Boolean): String {
@@ -61,7 +69,15 @@ data class CanFrame(val id: Long, val eff: Long, val rtr: Long, val len: Int, va
             val pgn = id.shr(8).and(0x3FFFF).toInt()
             val value = parseDataValue(pgn, data.map { it.toByte() }.toByteArray())
             return if (value != null) {
-                "${value.first}[${pgn}][${value.second}]"
+                when (value.first) {
+                    65266 -> value0 = value.third
+                    65153 -> value1 = value.third
+                    65246 -> value2 = value.third
+                    65262 -> value3 = value.third
+                    61444 -> value4 = value.third
+                    65215 -> value5 = value.third
+                }
+                "${value.second}[${pgn}][${value.third}]"
             } else {
                 "未解析成功${pgn}"
             }
@@ -183,18 +199,15 @@ private fun AppSocketUI(modifier: Modifier = Modifier) {
     val can0 = remember { CanChannelState(can0Name, can0Baud) }
     val can1 = remember { CanChannelState(can1Name, can1Baud) }
     var showTips by remember { mutableStateOf(true) }
-    var initializer by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) {
+    DisposableEffect(Unit) {
         scope.launch {
-            if (!initializer) {
-                try {
-                    copyLibraryToTemp()
-                } catch (e: Exception) {
-                    e.fillInStackTrace()
-                }
-                initializer = true
+            try {
+                copyLibraryToTemp()
+            } catch (e: Exception) {
+                e.fillInStackTrace()
             }
         }
+        onDispose { }
     }
     if (showTips) {
         Dialog(
@@ -204,10 +217,7 @@ private fun AppSocketUI(modifier: Modifier = Modifier) {
                 Card {
                     val platform = getPlatform()
                     Text(
-                        text = "${platform.os}-${platform.arch}" +
-                                "\n${getCanList().joinToString(",")}" +
-                                (if (needUpdateSystem()) "❌需要root权限才能正常操作CAN设备\n" else "") +
-                                "\n首次使用提示：\n1. 【未打开时】点击Open上方文字可以设置CAN ID和速率\n5. 【已打开】点击 Tx/Rx 可清零计数",
+                        text = "${platform.os}-${platform.arch}" + "\n${getCanList().joinToString(",")}" + (if (needUpdateSystem()) "❌需要root权限才能正常操作CAN设备\n" else "") + "\n首次使用提示：\n1. 【未打开时】点击Open上方文字可以设置CAN ID和速率\n5. 【已打开】点击 Tx/Rx 可清零计数",
                         modifier = Modifier.fillMaxWidth().padding(globalPadding),
                         textAlign = TextAlign.Start,
                         fontSize = 14.sp
@@ -237,6 +247,18 @@ private fun AppSocketUI(modifier: Modifier = Modifier) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
+                J1939Panel("节气门", value0)
+                J1939Panel("燃油量", value1)
+                J1939Panel("空气压力", value2)
+                J1939Panel("温度", value3)
+                J1939Panel("转速", value4)
+                J1939Panel("车速", value5)
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
                 Text(text = "日志:", fontSize = 10.sp)
                 Text(text = "清空", fontSize = 10.sp, modifier = Modifier.clickable {
                     can0.log = emptyList()
@@ -251,9 +273,7 @@ private fun AppSocketUI(modifier: Modifier = Modifier) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CanCard(
-    ch: CanChannelState,
-    configKey: String,
-    modifier: Modifier = Modifier
+    ch: CanChannelState, configKey: String, modifier: Modifier = Modifier
 ) {
     val scope = rememberCoroutineScope()
     val settings = Settings()
@@ -315,14 +335,12 @@ private fun CanCard(
                         }
                     })
                 )
-                if (ch.isOpened)
-                    Icon(
-                        imageVector = if (isExpand) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                        contentDescription = null,
-                        modifier = Modifier.clickable {
-                            isExpand = !isExpand
-                        }
-                    )
+                if (ch.isOpened) Icon(
+                    imageVector = if (isExpand) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                    contentDescription = null,
+                    modifier = Modifier.clickable {
+                        isExpand = !isExpand
+                    })
             }
             if (showConfigDialog) {
                 Dialog(
@@ -538,8 +556,7 @@ private fun CanCard(
                             Text("数据递增", fontSize = 12.sp)
                         }
                         Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.clickable {
+                            verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clickable {
                                 ch.isOrigin = !ch.isOrigin
                             }) {
                             Checkbox(
@@ -730,6 +747,46 @@ private fun startSending(
     }
 }
 
+@Composable
+private fun J1939Panel(name: String, value: String) {
+    // 记住当前的颜色状态
+    var textColor by remember(value) {
+        mutableStateOf(
+            Color(
+                red = 0.2f + Random.nextFloat() * 0.8f,
+                green = 0.2f + Random.nextFloat() * 0.8f,
+                blue = 0.2f + Random.nextFloat() * 0.8f
+            )
+        )
+    }
+
+    // 当value变化时更新颜色
+    LaunchedEffect(value) {
+        if (value.isNotEmpty()) { // 只在有实际值时改变颜色
+            textColor = Color(
+                red = 0.2f + Random.nextFloat() * 0.8f,
+                green = 0.2f + Random.nextFloat() * 0.8f,
+                blue = 0.2f + Random.nextFloat() * 0.8f
+            )
+        }
+    }
+    Card {
+        Column(
+            modifier = Modifier/*.width(200.dp)*/.padding(globalPadding),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = name,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+            )
+            Text(
+                text = value,
+                color = textColor // 应用随机颜色
+            )
+        }
+    }
+}
 
 @Composable
 private fun LogPanel(lines: List<String>) {
@@ -745,13 +802,9 @@ private fun LogPanel(lines: List<String>) {
         value = logText,
         onValueChange = { },
         readOnly = true,
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(vertical = 4.dp),
+        modifier = Modifier.fillMaxSize().padding(vertical = 4.dp),
         textStyle = LocalTextStyle.current.copy(
-            fontFamily = FontFamily.Monospace,
-            fontSize = 12.sp,
-            color = Color.Black
+            fontFamily = FontFamily.Monospace, fontSize = 12.sp, color = Color.Black
         ),
         maxLines = Int.MAX_VALUE,
         singleLine = false,

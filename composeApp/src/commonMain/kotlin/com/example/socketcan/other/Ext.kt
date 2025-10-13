@@ -4,6 +4,7 @@ import socketcancompose.composeapp.generated.resources.Res
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.math.roundToInt
 
 fun nowTime(): String = SimpleDateFormat("HH:mm:ss", Locale.CHINA).format(Date(System.currentTimeMillis()))
 
@@ -17,7 +18,7 @@ fun isDebug(): Boolean = true
  * 乘以转换系数
  * 加上偏置
  */
-fun parseDataValue(pgn: Int, data: ByteArray): Pair<String, String>? {
+fun parseDataValue(pgn: Int, data: ByteArray): Triple<Int, String, String>? {
     var name = ""
     var value = ""
     try {
@@ -66,6 +67,10 @@ fun parseDataValue(pgn: Int, data: ByteArray): Pair<String, String>? {
             65150 -> {}
             65151 -> {}
             65154 -> {}
+            65153 -> {//0x18FE8100 发动机燃油流量1
+                name = "发动机燃油流量1"
+                value = "${(byteArray2Int(data.slice(0..5).reversed().toByteArray()) * 0.1).roundToInt()} m^3/h"
+            }
             65155 -> {}
             65156 -> {}
             65157 -> {}
@@ -74,11 +79,6 @@ fun parseDataValue(pgn: Int, data: ByteArray): Pair<String, String>? {
             65160 -> {}
             65161 -> {}
             65162 -> {}
-            65163 -> {//0x18FE8100 发动机燃油流量1
-                name = "发动机燃油流量1"
-                value = "${byteArray2Int(data.slice(0..5).reversed().toByteArray()) * 0.1} m^3/h"
-            }
-
             65164 -> {}
             65165 -> {}
             65166 -> {}
@@ -163,7 +163,7 @@ fun parseDataValue(pgn: Int, data: ByteArray): Pair<String, String>? {
             65245 -> {}
             65246 -> {//0x18FEDE00 发动机空气启动压力
                 name = "发动机空气启动压力"
-                value = "${data[0] * 4} kPa"
+                value = "${data[0].toInt().and(0xFF)} kPa"
             }
 
             65247 -> {}
@@ -187,7 +187,7 @@ fun parseDataValue(pgn: Int, data: ByteArray): Pair<String, String>? {
             65261 -> {}
             65262 -> {//0x18FEEE00 发动机冷却液温度
                 name = "发动机冷却液温度"
-                value = "${data[1] - 40} deg C"
+                value = "${data[0].toInt().and(0xFF) - 40} deg ℃"
             }
 
             65263 -> {}
@@ -216,7 +216,7 @@ fun parseDataValue(pgn: Int, data: ByteArray): Pair<String, String>? {
             65278 -> {}
             65279 -> {}
         }
-        return Pair(name, value)
+        return Triple(pgn, name, value)
     } catch (e: Exception) {
         e.printStackTrace()
     }
@@ -229,8 +229,8 @@ suspend fun copyLibraryToTemp() {
     val currentRuntime = System.getProperty("user.dir")
     println("currentRuntime=${currentRuntime}")
     val libraryName = "libsocketcan.so"
-    val osName = System.getProperty("os.name")?.lowercase()?:""
-    val osArch = System.getProperty("os.arch")?.lowercase()?:""
+    val osName = System.getProperty("os.name")?.lowercase() ?: ""
+    val osArch = System.getProperty("os.arch")?.lowercase() ?: ""
 
     val path = when {
         osName.contains("linux") && osArch.contains("aarch64") -> "linux-arm64"
