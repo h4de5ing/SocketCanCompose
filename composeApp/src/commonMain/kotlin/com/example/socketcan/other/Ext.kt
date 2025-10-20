@@ -6,7 +6,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.roundToInt
 
-fun nowTime(): String = SimpleDateFormat("HH:mm:ss", Locale.CHINA).format(Date(System.currentTimeMillis()))
+fun nowTime(): String = SimpleDateFormat("HH:mm:ss.SSS", Locale.CHINA).format(Date(System.currentTimeMillis()))
 
 fun isDebug(): Boolean = true
 

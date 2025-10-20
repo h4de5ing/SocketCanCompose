@@ -222,7 +222,7 @@ private fun AppSocketUI(modifier: Modifier = Modifier) {
                 Card {
                     val platform = getPlatform()
                     Text(
-                        text = "${platform.os}-${platform.arch}" + "[${canList.joinToString(",")}]" + (if (needUpdateSystem()) "\n❌需要root权限才能正常操作CAN设备\n" else "") + "\n首次使用提示：\n1. 【未打开时】点击Open上方文字可以设置CAN Index和速率\n5. 【已打开】点击 Tx/Rx 可清零计数",
+                        text = "${platform.os}-${platform.arch}" + "[${canList.joinToString(",")}]" + (if (needUpdateSystem()) "\n❌需要root权限才能正常操作CAN设备\n" else "") + "\n首次使用提示：\n1. 【未打开时】点击【打开】上方文字可以设置CAN Index和速率\n5. 【已打开】点击 Tx/Rx 可清零计数",
                         modifier = Modifier.fillMaxWidth().padding(globalPadding),
                         textAlign = TextAlign.Start,
                         fontSize = 14.sp
@@ -288,8 +288,10 @@ private fun CanCard(
     // 发送帧相关状态
     var frameType by remember { mutableLongStateOf(0L) } // 0: 标准帧, 1: 扩展帧
     var frameFormat by remember { mutableLongStateOf(0L) } // 0: 数据帧, 1: 远程帧
+    val frameTypeList = arrayOf("标准帧", "扩展帧")
+    val frameFormatList = arrayOf("数据帧", "远程帧")
     var canIdInput by remember { mutableStateOf("123") }
-    var canDataInput by remember { mutableStateOf("A0 A1 A2 A3 A4 A5 A6 A7") }
+    var canDataInput by remember { mutableStateOf("00 01 02 03 04 05 06 07") }
     // 下拉菜单展开状态
     var frameTypeExpanded by remember { mutableStateOf(false) }
     var frameFormatExpanded by remember { mutableStateOf(false) }
@@ -455,17 +457,17 @@ private fun CanCard(
 
                                 ExposedDropdownMenu(
                                     expanded = frameTypeExpanded, onDismissRequest = { frameTypeExpanded = false }) {
-                                    DropdownMenuItem(text = { Text("标准帧") }, onClick = {
-                                        frameType = 0L
-                                        frameTypeExpanded = false
-                                        if (canIdInput.length > 3) {
-                                            canIdInput = canIdInput.take(3)
-                                        }
-                                    })
-                                    DropdownMenuItem(text = { Text("扩展帧") }, onClick = {
-                                        frameType = 1L
-                                        frameTypeExpanded = false
-                                    })
+                                    frameTypeList.forEachIndexed { index, option ->
+                                        DropdownMenuItem(text = { Text(option) }, onClick = {
+                                            frameType = index.toLong()
+                                            frameTypeExpanded = false
+                                            if (frameType == 0L) {//标准帧 需要特殊处理
+                                                if (canIdInput.length > 3) {
+                                                    canIdInput = canIdInput.take(3)
+                                                }
+                                            }
+                                        })
+                                    }
                                 }
                             }
                         }
@@ -485,18 +487,15 @@ private fun CanCard(
                                     label = { Text("帧格式") },
                                     modifier = Modifier.fillMaxWidth().menuAnchor(MenuAnchorType.PrimaryNotEditable)
                                 )
-
                                 ExposedDropdownMenu(
                                     expanded = frameFormatExpanded,
                                     onDismissRequest = { frameFormatExpanded = false }) {
-                                    DropdownMenuItem(text = { Text("数据帧") }, onClick = {
-                                        frameFormat = 0L
-                                        frameFormatExpanded = false
-                                    })
-                                    DropdownMenuItem(text = { Text("远程帧") }, onClick = {
-                                        frameFormat = 1L
-                                        frameFormatExpanded = false
-                                    })
+                                    frameFormatList.forEachIndexed { index, option ->
+                                        DropdownMenuItem(text = { Text(option) }, onClick = {
+                                            frameFormat = index.toLong()
+                                            frameFormatExpanded = false
+                                        })
+                                    }
                                 }
                             }
                         }
@@ -689,6 +688,7 @@ private fun startSending(
     onStart: () -> Unit,
     onComplete: () -> Unit
 ): Job? {
+    println("准备开始发送数据:${canIdInput},${canDataInput},${frameType},${frameFormat}")
     return try {
         // 验证输入
         if (canIdInput.isEmpty()) {
@@ -742,6 +742,7 @@ private fun startSending(
                         bytes.byteSeparator = " "
                     }
                     val dataString = currentData.toHexString(format)
+                    println("最终发送数据:${currentId},${dataString},${frameType},${frameFormat}")
                     ch.addLog(
                         "📤 第 $i/$count 帧: ID=${
                             currentId.toString(16).uppercase()
