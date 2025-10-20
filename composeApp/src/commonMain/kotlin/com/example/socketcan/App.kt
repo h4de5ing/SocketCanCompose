@@ -189,6 +189,7 @@ class CanChannelState(var name: String, initialBaudRate: Int) {
 }
 
 private val globalPadding = 8.dp
+private var canList = emptyList<String>()
 
 @Composable
 private fun AppSocketUI(modifier: Modifier = Modifier) {
@@ -205,6 +206,8 @@ private fun AppSocketUI(modifier: Modifier = Modifier) {
         scope.launch {
             try {
                 copyLibraryToTemp()
+                canList = getCanList()
+                println("列表:${canList}")
             } catch (e: Exception) {
                 e.fillInStackTrace()
             }
@@ -219,7 +222,7 @@ private fun AppSocketUI(modifier: Modifier = Modifier) {
                 Card {
                     val platform = getPlatform()
                     Text(
-                        text = "${platform.os}-${platform.arch}" + "\n${getCanList().joinToString(",")}" + (if (needUpdateSystem()) "❌需要root权限才能正常操作CAN设备\n" else "") + "\n首次使用提示：\n1. 【未打开时】点击Open上方文字可以设置CAN ID和速率\n5. 【已打开】点击 Tx/Rx 可清零计数",
+                        text = "${platform.os}-${platform.arch}" + "[${canList.joinToString(",")}]" + (if (needUpdateSystem()) "\n❌需要root权限才能正常操作CAN设备\n" else "") + "\n首次使用提示：\n1. 【未打开时】点击Open上方文字可以设置CAN Index和速率\n5. 【已打开】点击 Tx/Rx 可清零计数",
                         modifier = Modifier.fillMaxWidth().padding(globalPadding),
                         textAlign = TextAlign.Start,
                         fontSize = 14.sp
@@ -300,7 +303,7 @@ private fun CanCard(
 
     var isExpand by remember { mutableStateOf(true) }
     var isTimeoutExpanded by remember { mutableStateOf(false) }
-    val timeoutOptions = listOf("can0", "can1", "can2", "can3")
+    val timeoutOptions = canList.ifEmpty { listOf("can0", "can1", "can2", "can3") }
     Card(
         modifier = modifier.fillMaxWidth().padding(4.dp), colors = CardDefaults.cardColors(
             containerColor = when {

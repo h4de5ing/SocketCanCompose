@@ -34,7 +34,20 @@ actual fun setCanBaudRate(name: String, baudRate: Int, onCanBaudRate: (Boolean) 
 }
 
 actual fun getCanList(): List<String> {
-    return emptyList()
+    val canDevices = mutableListOf<String>()
+    try {
+        val result = exec("ip a|grep can")
+        // 正则表达式匹配模式：
+        // ^\d+:\s+ - 匹配行首的数字和冒号，后面跟着空格
+        // (can\d+): - 捕获组匹配 can 后面跟着数字的设备名
+        val pattern = Regex("""^\d+:\s+(can\d+):""")
+        result.successMsg?.lineSequence()?.forEach { line ->
+            pattern.find(line)?.let { matchResult -> canDevices.add(matchResult.groupValues[1]) }
+        }
+    } catch (e: Exception) {
+        e.fillInStackTrace()
+    }
+    return canDevices
 }
 
 
