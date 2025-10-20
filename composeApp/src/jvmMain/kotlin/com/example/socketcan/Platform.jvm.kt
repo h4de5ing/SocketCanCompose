@@ -76,5 +76,5 @@ actual fun canWrite(
     dateLength: Int,
     data: ByteArray
 ): Int {
-    return SocketCAN.socketcanWrite(socketFd, canId, isExtended, isExtended, dateLength, data)
+    return SocketCAN.socketcanWrite(socketFd, canId, isExtended, isRemote, dateLength, data)
 }

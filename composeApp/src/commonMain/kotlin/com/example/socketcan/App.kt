@@ -195,7 +195,7 @@ private var canList = emptyList<String>()
 private fun AppSocketUI(modifier: Modifier = Modifier) {
     val scope = rememberCoroutineScope()
     val settings = Settings()
-    var can0Name by remember { mutableStateOf(settings.get<String>("can0_name") ?: "can0") }
+    var can0Name by remember { mutableStateOf(settings.get<String>("can0_name") ?: "can2") }
     var can1Name by remember { mutableStateOf(settings.get<String>("can1_name") ?: "can1") }
     var can0Baud by remember { mutableIntStateOf(settings.get<Int>("can0_baud") ?: 250000) }
     var can1Baud by remember { mutableIntStateOf(settings.get<Int>("can1_baud") ?: 250000) }
@@ -688,7 +688,6 @@ private fun startSending(
     onStart: () -> Unit,
     onComplete: () -> Unit
 ): Job? {
-    println("准备开始发送数据:${canIdInput},${canDataInput},${frameType},${frameFormat}")
     return try {
         // 验证输入
         if (canIdInput.isEmpty()) {
@@ -742,7 +741,6 @@ private fun startSending(
                         bytes.byteSeparator = " "
                     }
                     val dataString = currentData.toHexString(format)
-                    println("最终发送数据:${currentId},${dataString},${frameType},${frameFormat}")
                     ch.addLog(
                         "📤 第 $i/$count 帧: ID=${
                             currentId.toString(16).uppercase()
