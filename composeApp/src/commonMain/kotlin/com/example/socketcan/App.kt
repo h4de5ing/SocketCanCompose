@@ -195,7 +195,7 @@ private var canList = emptyList<String>()
 private fun AppSocketUI(modifier: Modifier = Modifier) {
     val scope = rememberCoroutineScope()
     val settings = Settings()
-    var can0Name by remember { mutableStateOf(settings.get<String>("can0_name") ?: "can2") }
+    var can0Name by remember { mutableStateOf(settings.get<String>("can0_name") ?: "can0") }
     var can1Name by remember { mutableStateOf(settings.get<String>("can1_name") ?: "can1") }
     var can0Baud by remember { mutableIntStateOf(settings.get<Int>("can0_baud") ?: 250000) }
     var can1Baud by remember { mutableIntStateOf(settings.get<Int>("can1_baud") ?: 250000) }
