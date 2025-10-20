@@ -4,6 +4,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.ArrowDropUp
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.*
@@ -297,7 +299,8 @@ private fun CanCard(
     var sendJob by remember { mutableStateOf<Job?>(null) }
 
     var isExpand by remember { mutableStateOf(true) }
-
+    var isTimeoutExpanded by remember { mutableStateOf(false) }
+    val timeoutOptions = listOf("can0", "can1", "can2", "can3")
     Card(
         modifier = modifier.fillMaxWidth().padding(4.dp), colors = CardDefaults.cardColors(
             containerColor = when {
@@ -357,15 +360,35 @@ private fun CanCard(
                                 fontWeight = FontWeight.Bold,
                                 modifier = Modifier.padding(bottom = globalPadding)
                             )
-
-                            OutlinedTextField(
-                                value = newCanId,
-                                onValueChange = { newCanId = it },
-                                label = { Text("CAN接口名称") },
-                                singleLine = true,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-
+                            ExposedDropdownMenuBox(expanded = isTimeoutExpanded, onExpandedChange = { }) {
+                                OutlinedTextField(
+                                    value = newCanId,
+                                    onValueChange = { newCanId = it },
+                                    label = { Text("CAN接口名称") },
+                                    singleLine = true,
+                                    trailingIcon = {
+                                        IconButton(
+                                            onClick = { isTimeoutExpanded = !isTimeoutExpanded }) {
+                                            Icon(
+                                                imageVector = if (isTimeoutExpanded) Icons.Default.ArrowDropUp else Icons.Default.ArrowDropDown,
+                                                contentDescription = ""
+                                            )
+                                        }
+                                    },
+                                    modifier = Modifier.fillMaxWidth().menuAnchor(
+                                        type = MenuAnchorType.PrimaryEditable, isTimeoutExpanded
+                                    )
+                                )
+                                ExposedDropdownMenu(
+                                    expanded = isTimeoutExpanded, onDismissRequest = { isTimeoutExpanded = false }) {
+                                    timeoutOptions.forEach { option ->
+                                        DropdownMenuItem(text = { Text(option) }, onClick = {
+                                            newCanId = option
+                                            isTimeoutExpanded = false
+                                        })
+                                    }
+                                }
+                            }
                             OutlinedTextField(
                                 value = baudInput,
                                 onValueChange = { baudInput = it },
@@ -786,8 +809,7 @@ private fun J1939Panel(name: String, value: String) {
                 fontWeight = FontWeight.Bold,
             )
             Text(
-                text = value,
-                color = textColor // 应用随机颜色
+                text = value, color = textColor // 应用随机颜色
             )
         }
     }

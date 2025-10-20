@@ -10,7 +10,7 @@ plugins {
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.composeHotReload)
 }
-val kmpVersionName = "3.0.1"
+val kmpVersionName = "3.0.2"
 kotlin {
     androidTarget {
         compilerOptions {
@@ -102,7 +102,7 @@ android {
         if (buildType == "release") {
             outputs.all {
                 val fromFile = outputFile
-                var intoFile = "../$id/v${defaultConfig.versionName}"
+                var intoFile = "$id/v${defaultConfig.versionName}"
                 copy {
                     from(fromFile)
                     into(intoFile)
