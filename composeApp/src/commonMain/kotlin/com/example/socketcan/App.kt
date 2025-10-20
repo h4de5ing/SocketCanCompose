@@ -711,10 +711,15 @@ private fun startSending(
                 // 发送当前帧
                 withContext(Dispatchers.Main) {
                     ch.send(currentId, frameType, frameFormat, currentData)
+                    val format = HexFormat {
+                        upperCase = true
+                        bytes.byteSeparator = " "
+                    }
+                    val dataString = currentData.toHexString(format)
                     ch.addLog(
                         "📤 第 $i/$count 帧: ID=${
                             currentId.toString(16).uppercase()
-                        },Data=${currentData.joinToString(" ") { it.toString(16).uppercase() }}"
+                        },Data=${dataString}"
                     )
                 }
 
@@ -790,7 +795,7 @@ private fun J1939Panel(name: String, value: String) {
 
 @Composable
 private fun LogPanel(lines: List<String>) {
-    val logText = remember(lines) { lines.reversed().takeLast(300).joinToString("\n") }
+    val logText = remember(lines) { lines.reversed().joinToString("\n") }
     val scrollState = rememberScrollState()
     LaunchedEffect(lines.size) {
         if (lines.isNotEmpty()) {
