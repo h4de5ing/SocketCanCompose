@@ -24,6 +24,12 @@ add_library( # Sets the name of the library.
              # Provides a relative path to your source file(s).
              socketcan.cpp )
 
+if(ANDROID AND NOT DEFINED ANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES)
+    # Fallback for direct CMake builds that do not pass the NDK r27+ page-size switch.
+    target_compile_definitions(socketcan PRIVATE __BIONIC_NO_PAGE_SIZE_MACRO)
+    target_link_options(socketcan PRIVATE "-Wl,-z,max-page-size=16384")
+endif()
+
 # Searches for a specified prebuilt library and stores the path as a
 # variable. Because CMake includes system libraries in the search path by
 # default, you only need to specify the name of the public NDK library

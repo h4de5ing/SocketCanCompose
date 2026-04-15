@@ -73,5 +73,28 @@ sh gradlew packageDistributionForCurrentOS
 请注意Makefile中的JAVA_HOME路径是否正确  
 在jni目录下运行make all即可编译对应平台的so包  
 
+- 16KB页大小兼容说明  
+```agsl
+Android:
+- 这个工程已经固定为 NDK 27.0.12077973，并通过
+  -DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON
+  生成兼容 16KB page size 的 .so。
+- Android APK 内的 JNI 库由 externalNativeBuild 产出，不是
+  composeResources/files/native/arm64-v8a 下面那份资源库。
+
+Linux:
+- x86_64 默认使用 16KB 对齐链接:
+  make all
+- 如果目标是 arm64 Linux，默认保持 64KB 对齐；如果你的目标系统是 16KB 页，
+  可以显式指定:
+  make MAX_PAGE_SIZE=16384 all
+
+验证:
+- Android/Linux 都可以用 readelf 或 llvm-readelf 检查:
+  readelf -l libsocketcan.so
+- 重点看 Program Headers 里的 LOAD Align，16KB 应该是 0x4000，
+  64KB 应该是 0x10000。
+```
+
 - linux debian安装好deb包可以用sudo命令运行  
 sudo /opt/socketcan/bin/SocketCan

@@ -47,6 +47,7 @@ kotlin {
 android {
     namespace = "com.example.socketcan"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
+    ndkVersion = "27.0.12077973"
 
     defaultConfig {
         applicationId = "com.example.socketcan"
@@ -54,6 +55,12 @@ android {
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = kmpVersionName.replace(".", "").toInt()
         versionName = kmpVersionName
+        externalNativeBuild {
+            cmake {
+                // NDK r27 requires this flag to emit 16 KB page-size compatible .so files.
+                arguments += listOf("-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON")
+            }
+        }
     }
     sourceSets {
         getByName("main").java.srcDirs("src/androidMain/java")
@@ -102,7 +109,7 @@ android {
         if (buildType == "release") {
             outputs.all {
                 val fromFile = outputFile
-                var intoFile = "$id/v${defaultConfig.versionName}"
+                var intoFile = "../build/v${defaultConfig.versionName}"
                 copy {
                     from(fromFile)
                     into(intoFile)

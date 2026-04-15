@@ -5,7 +5,13 @@ JAVA_HOME ?= /home/jdk-19.0.2+7
 INCLUDES := -I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/linux
 CXXFLAGS := -fPIC -O2 -Wall -Wextra -std=c++11
 CFLAGS := -fPIC -O2 -Wall -Wextra
-LDFLAGS := -shared -Wl,-soname,libsocketcan.so
+ARCH := $(shell uname -m)
+ifeq ($(ARCH),aarch64)
+MAX_PAGE_SIZE ?= 65536
+else
+MAX_PAGE_SIZE ?= 16384
+endif
+LDFLAGS := -shared -Wl,-soname,libsocketcan.so -Wl,-z,max-page-size=$(MAX_PAGE_SIZE)
 
 # Source files
 SRC_CXX := socketcan.cpp
